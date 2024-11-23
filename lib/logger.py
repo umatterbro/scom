@@ -21,7 +21,7 @@ neu_c = _color(96, 96, 96)
 
 def _log(fname: str, fline: int, msg: str, status: str, end: str = '\n'):
     timestamp = round(datetime.datetime.now().timestamp())
-    print(f'[{timestamp}] {fname}@{fline} {status} {msg}', end=end, flush=True)
+    print(f'[{status}] [{timestamp}] {fname}:{fline} - {msg}', end=end, flush=True)
 
 def positive(msg: str, end: str = '\n'):
     current = inspect.currentframe()
@@ -29,7 +29,7 @@ def positive(msg: str, end: str = '\n'):
 
     fname = parent.filename.split('/')[::-1][0].split('.')[0]
     fline = parent.lineno
-    _log(fname, fline, msg, f'{pos_c.on()}${pos_c.off()}', end)
+    _log(fname, fline, msg, f'{pos_c.on()}POS{pos_c.off()}', end)
 
 def negative(msg: str, end: str = '\n'):
     current = inspect.currentframe()
@@ -37,7 +37,7 @@ def negative(msg: str, end: str = '\n'):
 
     fname = parent.filename.split('/')[::-1][0].split('.')[0]
     fline = parent.lineno
-    _log(fname, fline, msg, f'{pos_c.on()}${pos_c.off()}', end)
+    _log(fname, fline, msg, f'{pos_c.on()}NEG{pos_c.off()}', end)
 
 def warn(msg: str, end: str = '\n'):
     current = inspect.currentframe()
@@ -45,7 +45,7 @@ def warn(msg: str, end: str = '\n'):
 
     fname = parent.filename.split('/')[::-1][0].split('.')[0]
     fline = parent.lineno
-    _log(fname, fline, msg, f'{wrn_c.on()}!{wrn_c.off()}', end)
+    _log(fname, fline, msg, f'{wrn_c.on()}WRN{wrn_c.off()}', end)
 
 def debug(msg: str, end: str = '\n'):
     current = inspect.currentframe()
@@ -53,4 +53,4 @@ def debug(msg: str, end: str = '\n'):
 
     fname = parent.filename.split('/')[::-1][0].split('.')[0]
     fline = parent.lineno
-    _log(fname, fline, msg, f'{dbg_c.on()}~{dbg_c.off()}', end)
+    _log(fname, fline, msg, f'{dbg_c.on()}DBG{dbg_c.off()}', end)
