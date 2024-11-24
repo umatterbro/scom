@@ -12,8 +12,14 @@ pack = proto.packet.create(src_ident, proto.ident.generate(), proto.packet.tds_s
 psds_cmp = pack.psds.compile()
 psds_data = psds_cmp.data()
 vals = partitioner.get_values(psds_data)
+
 for x in vals:
-    sub_vals = partitioner.get_values(x)
-    for y in sub_vals:
-        print(y)
+    if(partitioner.is_partition(x)):
+        for y in partitioner.get_values(x):
+            if(partitioner.is_partition(y)):
+                for z in partitioner.get_values(y):
+                    print(f'-- {z}')
+
+            else: print(f'- {y}')
+    else: print(f'{x}')
     print('\n\n')
