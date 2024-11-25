@@ -2,24 +2,35 @@ import scom
 import cfgmgr
 import proto
 import partitioner
+import base64
+import conn
+import logger
 
-cmgr = cfgmgr.config_manager(file_path='conf.json')
-scm = scom.scom(cmgr)
+def pr_val(val, rec_n: int):
+    if(partitioner.is_partition(val)):
+        vals = partitioner.get_values(val)
+        for x in vals:
+            pr_val(x, rec_n+1)
+    else: print(f'{"-"*rec_n} {val}')
+
+def pr_vals(vals):
+    for x in vals:
+        pr_val(x, 0)
+        print()
 
 src_ident = proto.ident.generate()
-pack = proto.packet.create(src_ident, proto.ident.generate(), proto.packet.tds_s.flag_cont(255), 0)
+pack = proto.packet.create(src_ident, proto.ident.generate(), proto.packet.tds_s.flag_cont.create(key_flag=True), 0)
 
-psds_cmp = pack.psds.compile()
-psds_data = psds_cmp.data()
-vals = partitioner.get_values(psds_data)
+pack_cmp = pack.compile()
+pack_data = pack_cmp.data()
+print(f'packet final: {pack_data}\n')
 
-for x in vals:
-    if(partitioner.is_partition(x)):
-        for y in partitioner.get_values(x):
-            if(partitioner.is_partition(y)):
-                for z in partitioner.get_values(y):
-                    print(f'-- {z}')
+# pack_vals = partitioner.get_values(pack_data)
+# pr_vals(pack_vals)
 
-            else: print(f'- {y}')
-    else: print(f'{x}')
-    print('\n\n')
+try: con = conn.open(7901, 'epickeyoat')
+except ConnectionRefusedError:
+    logger.negative('connection refused')
+    exit(1)
+
+con.send_packet(pack)

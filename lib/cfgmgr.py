@@ -5,11 +5,15 @@ import logger
 class config_manager:
     _default_config = {
         'debug': False,
-        'name': 'server'
+        'name': 'server',
+        'host': 'localhost',
+        'port': 7901
     }
     _required_info = {
         'debug': bool,
-        'name': str
+        'name': str,
+        'host': str,
+        'port': int
     }
     def _fill_config(self, config: dict):
         if(not isinstance(config, dict)): return config
@@ -40,3 +44,15 @@ class config_manager:
             self.config = self._default_config
 
         logger.debug('loaded config')
+
+    def get(self, key):
+        if(not isinstance(key, str)): raise ValueError(f'key must be of type str, not {type(key).__name__}')
+
+        if(self._required_info.get(key) is not None):
+            return self._required_info.get(key)(self.config.get(key))
+        else: self.config.get(key)
+
+    def set(self, key: str, value):
+        if(not isinstance(key, str)): raise ValueError(f'key must be of type str, not {type(key).__name__}')
+        if(not isinstance(value, self._required_info.get(key))): raise ValueError(f'value for key {key} must be of type {self._required_info.get(key)}, not {type(value).__name__}')
+        self.config.update({key: value})

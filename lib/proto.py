@@ -66,6 +66,9 @@ class packet:
         def __init__(self):
             pass
 
+        def compile(self):
+            logger.warn(f'section default compile called, call mom for help?')
+
     class sis_s(section):
         def __init__(self):
             pass
@@ -150,17 +153,16 @@ class packet:
             super().__init__()
             logger.debug('transfer data section setup')
 
+        def compile(self):
+            return partitioner.partition(self.src.ident_str, self.dst.ident_str, self.flags.to_int(), self.tsmp, self.req_num)
+
     class psds_s(section):
         class heads:
             def __init__(self, predef_headers: dict = None): 
                 self._headers = {}
                 if(predef_headers is not None):
                     if(not isinstance(predef_headers, dict)): raise ValueError(f'predef_headers must be of type dict, not {type(predef_headers).__name__}')
-                    print(predef_headers)
-                    for header in predef_headers.items(): 
-                        print(f'adding {header[0]}={header[1]}')
-                        if(header[0] in self._headers): raise ValueError(f'attempt to redefine header {header[0]}')
-                        self._headers.update({header[0]: header[1]})
+                    for header in predef_headers.items(): self._headers.update({header[0]: header[1]})
                     logger.debug(f'loaded {len(self._headers)} predef headers')
 
             def get(self, key):
@@ -226,7 +228,6 @@ class packet:
             def compile(self):
                 return None
 
-        # TODO: setup NSC packets
         class psds_nsc(_psds):
             def __init__(self, headers, data: str):
                 if(not isinstance(headers, packet.psds_s.heads)): raise ValueError(f'headers must be of type heads, not {type(headers).__name__}')
@@ -239,7 +240,6 @@ class packet:
             def compile(self):
                 return partitioner.partition(self.headers, self.data)
 
-        # TODO: setup RTP packets
         class psds_rtp(_psds):
             def __init__(self, pack_n: int):
                 if(not isinstance(pack_n, int)): raise ValueError(f'pack_n must be of type int, not {type(pack_n).__name__}')
@@ -282,14 +282,12 @@ class packet:
             for flag in self.flag_map.items():
                 res = flag[1].compile()
                 if(not isinstance(res, partitioner.partition)): 
+                    if(res == None): continue
                     logger.debug(f'{flag[0].name} compile returned non partition value, type {type(res).__name__}')
                     continue
                 cmp = res.data()
                 tvals.append(cmp)
             return partitioner.partition(*tvals)
-
-    def gen_sis():
-        pass
 
     def __init__(self, tdsec: tds_s, psdsec: psds_s):
         if(not isinstance(tdsec, self.tds_s)): raise ValueError(f'transfer data section must be of type tds_s, not {type(tdsec).__name__}')
@@ -299,14 +297,56 @@ class packet:
 
         logger.debug('packet OK')
 
+    def compile(self):
+        return partitioner.partition(self.tds.compile().data(), self.psds.compile().data())
+
+    @staticmethod
+    def unbox(data: bytes):
+        if(not partitioner.is_partition(data)): return None
+
+        vals = partitioner.get_values(data)
+        
+        if(len(vals) <= 1): return None
+        if(not partitioner.is_partition(vals[0]) or not partitioner.is_partition(vals[1])): return None
+
+        tds = partitioner.get_values(vals[0])
+        psds = partitioner.get_values(vals[1])
+
+        src = tds[0].decode()
+        dst = tds[1].decode()
+        flags = tds[2].decode()
+        tsmp = tds[3].decode()
+        req_n = tds[4].decode()
+
+        try: flags = int(flags)
+        except: return None
+
+        try: req_n = int(req_n)
+        except: return None
+
+        flags = packet.tds_s.flag_cont(flags)
+
+        logger.debug(f'src: {src}')
+        logger.debug(f'dst: {dst}')
+        logger.debug(f'flags: {[f.name for f in flags.get_active_flags()]}')
+        logger.debug(f'tsmp: {tsmp}')
+        logger.debug(f'req_n: {req_n}')
+
+        for i in range(len(psds)):
+            data = psds[i]
+            if(not partitioner.is_partition(data)): continue
+            vals = partitioner.get_values(data)
+            # TODO: create structure class & subclasses for each packet type, so i can fill values easily, or smth like that
+            print(f'vals for {flags.get_active_flags()[i].name}: {vals}')
+
     @staticmethod
     def create(src: ident, dst: ident, flags: int, req_num: int, tsmp: float = round(datetime.datetime.now().timestamp())):
         tdsec = packet.tds_s(src, dst, flags, tsmp, req_num)
         psdsec = packet.psds_s(tdsec.flags, 
-                               packet.psds_s.psds_key('nuhuh', 'helloworldddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'),
+                               packet.psds_s.psds_key('nuhuh', 'helloworld'),
                                packet.psds_s.psds_syn(),
                                packet.psds_s.psds_ack(),
-                               packet.psds_s.psds_sec(packet.psds_s.heads({'hello': 'world'}), 'erm what the sigma'),
+                               packet.psds_s.psds_sec(packet.psds_s.heads({'hello': 'world'}), 'testing 123'),
                                packet.psds_s.psds_urg(),
                                packet.psds_s.psds_nsc(packet.psds_s.heads({'uh': 'no', 'uhh': 'yes'}), 'uh idk maybe'),
                                packet.psds_s.psds_rtp(0),

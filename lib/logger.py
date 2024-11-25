@@ -37,7 +37,7 @@ def negative(msg: str, end: str = '\n'):
 
     fname = parent.filename.split('/')[::-1][0].split('.')[0]
     fline = parent.lineno
-    _log(fname, fline, msg, f'{pos_c.on()}NEG{pos_c.off()}', end)
+    _log(fname, fline, msg, f'{neg_c.on()}NEG{neg_c.off()}', end)
 
 def warn(msg: str, end: str = '\n'):
     current = inspect.currentframe()

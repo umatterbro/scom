@@ -28,7 +28,6 @@ class partition:
 
             lv = len(value)
             if(lv > self._MAX_LEN):
-                f = 0
                 div = math.floor(lv / self._MAX_LEN)
                 rem = lv % self._MAX_LEN
 
@@ -46,10 +45,7 @@ class partition:
         barr.append(self._EOF_VAL)
         return barr
 
-def get_values(data: bytearray):
-    print(f'get_values call')
-    if(not isinstance(data, bytearray)): raise ValueError(f'data must be of type bytearray, not {type(data).__name__}')
-
+def get_values(data: bytes):
     lens = []
     clen = 0
     plen = 0
@@ -86,8 +82,7 @@ def get_values(data: bytearray):
         olen = nlen
     return vals
 
-def is_partition(data: bytearray):
-    if(not isinstance(data, bytearray)): raise ValueError(f'data must be of type bytearray, not {type(data).__name__}')
+def is_partition(data: bytes):
     if(len(data) == 0): return False
 
     return data[0] == 253 and data[::-1][0] == 254
